@@ -37,6 +37,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     radial-gradient(ellipse 90% 60% at 10% -10%, rgba(91, 156, 245, 0.14), transparent 50%),
     radial-gradient(ellipse 70% 50% at 95% 5%, rgba(167, 139, 250, 0.12), transparent 45%),
@@ -193,7 +194,7 @@ textarea:disabled {
 }
 
 .scroll-stage {
-  scroll-margin-top: 1.25rem;
+  scroll-margin-top: 5rem;
 }
 
 .scroll-highlight {

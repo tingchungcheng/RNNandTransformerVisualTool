@@ -17,6 +17,7 @@ interface AppContextValue {
   activeTokenIndex: number
   rnnStep: number
   timing: AnalysisTiming
+  analysisRunId: number
   submit: () => Promise<void>
   reset: () => void
 }
@@ -37,6 +38,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeTokenIndex, setActiveTokenIndex] = useState(-1)
   const [rnnStep, setRnnStep] = useState(-1)
   const [timing, setTiming] = useState<AnalysisTiming>(initialTiming)
+  const [analysisRunId, setAnalysisRunId] = useState(0)
 
   const timersRef = useRef<Array<ReturnType<typeof setInterval> | ReturnType<typeof setTimeout>>>([])
   const startTimeRef = useRef<number | null>(null)
@@ -130,6 +132,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRnnStep(-1)
     startTimeRef.current = Date.now()
     setTiming({ apiMs: null, elapsedMs: 0, totalMs: null })
+    setAnalysisRunId((id) => id + 1)
     setPhase('loading')
     startElapsedTicker()
 
@@ -176,6 +179,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         activeTokenIndex,
         rnnStep,
         timing,
+        analysisRunId,
         submit,
         reset,
       }}

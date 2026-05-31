@@ -1,6 +1,6 @@
 # RNN vs Transformer Demo
 
-Interactive web app comparing sequential LSTM processing with transformer self-attention.
+> **Note:** Attention weights and hidden states are shown as normalized visualization projections. Metrics are heuristic trend proxies clamped to [0,1] — not semantic ground truth.
 
 ## Architecture
 
@@ -41,13 +41,13 @@ Open [http://localhost:5173](http://localhost:5173). The Vite dev server proxies
 1. Enter text and click **Analyze**
 2. Watch tokens appear one by one
 3. Split view: RNN hidden-state animation (left) vs transformer attention heatmap (right)
-4. Metrics for syntax, semantics, and long-range dependency on each side
+4. Trend proxy metrics (local / spread / long-range patterns) on each side — normalized visualization helpers, not linguistic scores
 
 ## Documentation
 
-| File | Purpose |
-|------|---------|
-| [README.md](README.md) | Setup and quick start (this file) |
-| [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) | Code walkthrough, data flow, file map |
+| File                                                           | Purpose                               |
+| -------------------------------------------------------------- | ------------------------------------- |
+| [README.md](README.md)                                         | Setup and quick start (this file)     |
+| [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)                   | Code walkthrough, data flow, file map |
 | [frontend/public/examples.json](frontend/public/examples.json) | Sample sentences for **Load example** |
-| [frontend/src/locales/](frontend/src/locales/) | UI translations (en, zh-CN) |
+| [frontend/src/locales/](frontend/src/locales/)                 | UI translations (en, zh-CN)           |

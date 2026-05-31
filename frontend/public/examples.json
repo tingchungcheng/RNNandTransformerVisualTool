@@ -1,14 +1,8 @@
 {
   "sentences": [
     "The cat sat on the mat because it was warm and comfortable in the afternoon sun.",
-    "Transformers use self-attention to relate every token in a sentence to every other token.",
-    "Recurrent networks process sequences one step at a time, carrying hidden state forward.",
-    "Natural language processing helps computers understand, interpret, and generate human language.",
-    "The quick brown fox jumps over the lazy dog near the river bank at dawn.",
     "She opened the book and discovered a story about distant stars and forgotten cities.",
-    "Machine learning models learn patterns from data rather than following hand-written rules.",
-    "When it rains in spring, the garden fills with the scent of wet earth and fresh leaves.",
-    "The scientist explained that long-range dependencies are hard for simple RNNs to capture.",
-    "After years of research, the team finally published their results in a major journal."
+    "After years of research, the team finally published their results in a major journal.",
+    "The book that the teacher who I met in Tokyo recommended yesterday finally arrived on my desk this morning."
   ]
 }

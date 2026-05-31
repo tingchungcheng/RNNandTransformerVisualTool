@@ -8,13 +8,15 @@ interface MetricsPanelProps {
   accent: 'rnn' | 'transformer'
 }
 
-function MetricBar({ label, value, color }: { label: string; value: number; color: string }) {
+function MetricBar({ label, value, color, proxyTag }: { label: string; value: number; color: string; proxyTag: string }) {
   const pct = Math.round(value * 100)
   return (
     <div className="metric-row">
       <div className="metric-label">
         <span>{label}</span>
-        <span className="metric-value">{pct}%</span>
+        <span className="metric-value">
+          {pct} <span className="metric-proxy-tag">{proxyTag}</span>
+        </span>
       </div>
       <div className="metric-track">
         <div className="metric-fill" style={{ width: `${pct}%`, background: color }} />
@@ -30,9 +32,10 @@ export function MetricsPanel({ title, metrics, accent }: MetricsPanelProps) {
   return (
     <div className="metrics-panel">
       <h3>{title}</h3>
-      <MetricBar label={t('metrics.syntax')} value={metrics.syntax} color={color} />
-      <MetricBar label={t('metrics.semantics')} value={metrics.semantics} color={color} />
-      <MetricBar label={t('metrics.longRange')} value={metrics.long_range} color={color} />
+      <p className="metrics-note">{t('metrics.note')}</p>
+      <MetricBar label={t('metrics.localPattern')} value={metrics.syntax} color={color} proxyTag={t('metrics.proxyTag')} />
+      <MetricBar label={t('metrics.spreadPattern')} value={metrics.semantics} color={color} proxyTag={t('metrics.proxyTag')} />
+      <MetricBar label={t('metrics.longRangePattern')} value={metrics.long_range} color={color} proxyTag={t('metrics.proxyTag')} />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../context/I18nContext'
-import { useScrollToStage } from '../hooks/useScrollToStage'
+import { useScrollToStage, TOKEN_PHASES } from '../hooks/useScrollToStage'
 import './TokenAnimation.css'
 
 function tokenKind(text: string): 'special' | 'subword' | 'word' {
@@ -21,7 +21,7 @@ export function TokenAnimation() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
   const visible = phase === 'loading' || phase === 'tokenizing' || phase === 'results'
-  const sectionRef = useScrollToStage('loading', visible)
+  const sectionRef = useScrollToStage('token', TOKEN_PHASES, visible)
 
   if (!visible) return null
 
@@ -62,17 +62,7 @@ export function TokenAnimation() {
         <span className="source-label">{t('token.sourceLabel')}</span>
         <div className="source-text-inner">
           <p className="source-text">{inputText || '…'}</p>
-          {(phase === 'loading' || phase === 'tokenizing') && (
-            <div
-              className="scanner-beam"
-              style={{
-                left:
-                  phase === 'loading'
-                    ? undefined
-                    : `${Math.min(95, (activeTokenIndex / Math.max(total - 1, 1)) * 100)}%`,
-              }}
-            />
-          )}
+          {phase === 'loading' && <div className="scanner-beam" />}
         </div>
       </div>
 
@@ -85,7 +75,7 @@ export function TokenAnimation() {
         <span className="split-line" />
       </div>
 
-      <div className="token-stream">
+      <div className={`token-stream ${phase === 'tokenizing' ? 'token-stream--live' : ''}`}>
         {phase === 'loading' &&
           Array.from({ length: 6 }).map((_, i) => (
             <div key={`sk-${i}`} className="token-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
@@ -93,7 +83,10 @@ export function TokenAnimation() {
 
         {result?.tokens.map((token, i) => {
           const revealed = i <= activeTokenIndex || phase === 'results'
+          if (phase === 'tokenizing' && i > activeTokenIndex) return null
+
           const isActive = i === activeTokenIndex && phase === 'tokenizing'
+          const isEntering = isActive && phase === 'tokenizing'
           const isHovered = hoveredIndex === i
           const isSelected = selectedIndex === i
           const kind = tokenKind(token.text)
@@ -107,13 +100,13 @@ export function TokenAnimation() {
                 'token-chip',
                 `token-chip--${kind}`,
                 revealed ? 'token-chip--revealed' : '',
+                isEntering ? 'token-chip--entering' : '',
                 isActive ? 'token-chip--active' : '',
                 isHovered ? 'token-chip--hover' : '',
                 isSelected ? 'token-chip--selected' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
-              style={{ animationDelay: `${i * 60}ms` }}
               onMouseEnter={() => setHoveredIndex(i)}
               onMouseLeave={() => setHoveredIndex(null)}
               onClick={() => setSelectedIndex(i === selectedIndex ? null : i)}

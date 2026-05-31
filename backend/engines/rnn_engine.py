@@ -64,7 +64,7 @@ def _compute_rnn_metrics(hidden: torch.Tensor) -> Metrics:
     deltas = hidden[1:] - hidden[:-1]
     syntax = float(deltas.norm(dim=1).mean() / (hidden.norm(dim=1).mean() + 1e-6))
 
-    # semantics: how similar consecutive hidden states are
+    # spread pattern proxy: consecutive hidden-state similarity
     sims = [_cosine(hidden[i], hidden[i + 1]) for i in range(seq_len - 1)]
     semantics = float(sum(abs(s) for s in sims) / len(sims))
 

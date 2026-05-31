@@ -1,0 +1,31 @@
+.viz-disclaimer {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: rgba(251, 191, 36, 0.06);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--muted);
+  animation: panelEnter 0.45s ease both;
+}
+
+.viz-disclaimer-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: #fbbf24;
+  line-height: 1.2;
+}
+
+.viz-disclaimer strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.84rem;
+  margin-bottom: 0.25rem;
+}
+
+.viz-disclaimer p {
+  margin: 0;
+}

@@ -10,8 +10,12 @@
   "header": {
     "eyebrow": "Interactive demo",
     "title": "RNN vs Transformer",
-    "subtitle": "See tokenization, sequential LSTM processing, and transformer self-attention side by side.",
+    "subtitle": "Explore tokenization and normalized projections of hidden states and attention — structural trends, not semantic ground truth.",
     "newAnalysis": "← New analysis"
+  },
+  "disclaimer": {
+    "title": "About these visualizations",
+    "body": "Attention weights and hidden states are shown as normalized visualization projections to explore structural trends. They do not represent absolute semantic strength, importance, or individual neuron meaning."
   },
   "pipeline": {
     "ariaLabel": "Analysis progress",
@@ -22,7 +26,7 @@
   },
   "input": {
     "title": "Enter text",
-    "description": "Type a sentence to tokenize and compare how an RNN (LSTM) and a Transformer process it.",
+    "description": "Type a sentence to compare how an untrained LSTM and BERT process the same tokens — for illustration, not prediction accuracy.",
     "chars": "{count} chars",
     "placeholder": "Try: The cat sat on the mat…",
     "hint": "Press Ctrl+Enter to analyze",
@@ -50,24 +54,38 @@
     "elapsed": "Elapsed {time}",
     "total": "Total {time}"
   },
+  "flow": {
+    "title": "Information flow (schematic)",
+    "description": "Schematic view of how each architecture routes information — illustrative, not a literal neuron-level map.",
+    "token": "token",
+    "state": "state",
+    "rnnCompress": "Compressed",
+    "transformerConnect": "Connected",
+    "rnnCaption": "token → state → state → state — sequential merge into one hidden vector per step (demo LSTM, untrained).",
+    "transformerCaption": "token ↔ token ↔ token — pairwise attention paths in parallel (last-layer weights, normalized for display)."
+  },
   "rnn": {
     "title": "RNN (LSTM)",
     "badge": "Sequential",
-    "description": "Untrained LSTM (64→128) processes one token at a time. Hidden state accumulates left-to-right.",
-    "hiddenState": "Hidden state @ step {step}",
-    "l2Norm": "L2 norm: {norm} · dim {dim}",
-    "metricsTitle": "RNN metrics"
+    "description": "Untrained LSTM (64→128): hidden-state vectors per step. The bar and color grid are normalized projections of vector magnitude / components — not semantic scores.",
+    "hiddenState": "Hidden state projection @ step {step}",
+    "l2Norm": "Relative L2 norm: {norm} · dim {dim}",
+    "vectorTooltip": "Component {value} — normalized color only, not neuron activation semantics",
+    "metricsTitle": "RNN trend proxies"
   },
   "transformer": {
     "title": "Transformer",
     "badge": "Parallel attention",
-    "description": "BERT self-attention (all layers, last layer shown). Brighter cells = stronger attention.",
-    "metricsTitle": "Transformer metrics"
+    "description": "Last-layer self-attention (mean over heads), normalized for display. Cell brightness shows attention routing strength from query token (Y-axis) to key token (X-axis).",
+    "cellTooltip": "Normalized attention {from} → {to}: {value} (relative weight in this projection)",
+    "metricsTitle": "Transformer trend proxies"
   },
   "metrics": {
-    "syntax": "Syntax (local structure)",
-    "semantics": "Semantics (meaning spread)",
-    "longRange": "Long-range dependency"
+    "note": "Heuristic scores derived from hidden-state / attention dynamics, clamped to [0,1] for display. Trend indicators only — not linguistic benchmarks.",
+    "proxyTag": "proxy",
+    "localPattern": "Local pattern",
+    "spreadPattern": "Spread pattern",
+    "longRangePattern": "Long-range pattern"
   },
   "errors": {
     "emptyText": "Please enter some text to analyze.",

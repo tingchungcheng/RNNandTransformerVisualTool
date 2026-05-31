@@ -1,34 +1,59 @@
 import { useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
+import type { AppPhase } from '../types'
 
-/** Smooth-scroll to a section when analysis reaches a new stage. */
+const TOKEN_PHASES: AppPhase[] = ['loading', 'tokenizing']
+const RESULTS_PHASES: AppPhase[] = ['results']
+
+function scrollToElement(el: HTMLElement) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      el.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+      })
+      el.classList.add('scroll-highlight')
+      window.setTimeout(() => el.classList.remove('scroll-highlight'), 1200)
+    })
+  })
+}
+
+/**
+ * Scroll once per analysis run when `appPhase` enters `targetPhases`.
+ * Uses `stageId` so token / info-flow / etc. each fire independently.
+ */
 export function useScrollToStage(
-  phase: 'loading' | 'tokenizing' | 'results',
-  active: boolean,
+  stageId: string,
+  targetPhases: AppPhase[],
+  enabled: boolean,
 ) {
   const ref = useRef<HTMLElement>(null)
-  const { phase: appPhase } = useApp()
-  const scrolledRef = useRef(false)
+  const { phase: appPhase, analysisRunId } = useApp()
+  const doneForRun = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    if (!active) {
-      scrolledRef.current = false
-      return
-    }
-    if (appPhase !== phase || scrolledRef.current) return
+    doneForRun.current.clear()
+  }, [analysisRunId])
 
-    scrolledRef.current = true
-    const delay = phase === 'results' ? 400 : 80
+  useEffect(() => {
+    if (!enabled || !targetPhases.includes(appPhase)) return
 
+    const key = `${analysisRunId}:${stageId}`
+    if (doneForRun.current.has(key)) return
+
+    const delay = appPhase === 'results' ? 500 : 150
     const timer = window.setTimeout(() => {
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      ref.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
-      ref.current?.classList.add('scroll-highlight')
-      window.setTimeout(() => ref.current?.classList.remove('scroll-highlight'), 1200)
+      const el = ref.current
+      if (!el || doneForRun.current.has(key)) return
+      doneForRun.current.add(key)
+      scrollToElement(el)
     }, delay)
 
     return () => clearTimeout(timer)
-  }, [appPhase, phase, active])
+  }, [appPhase, enabled, analysisRunId, stageId, targetPhases])
 
   return ref
 }
+
+export { TOKEN_PHASES, RESULTS_PHASES }

@@ -1,8 +1,5 @@
 """
-Transformer engine using bert-base-uncased self-attention.
-
-Purpose: expose real attention weights from a pretrained encoder.
-We only read attentions — no fine-tuning or downstream head.
+Transformer attention geometry metrics (stable version)
 """
 
 from __future__ import annotations
@@ -20,57 +17,69 @@ _model: BertModel | None = None
 def _get_model() -> BertModel:
     global _model
     if _model is None:
-        # "eager" required: SDPA/FlashAttention backends omit attention weights.
-        _model = BertModel.from_pretrained(MODEL_NAME, attn_implementation="eager")
+        _model = BertModel.from_pretrained(
+            MODEL_NAME,
+            attn_implementation="eager"
+        )
         _model.eval()
     return _model
 
 
-def _compute_transformer_metrics(attention: torch.Tensor) -> Metrics:
+def _clamp(x: float) -> float:
+    return max(0.0, min(1.0, float(x)))
+
+
+def _compute_metrics(attention: torch.Tensor) -> Metrics:
     """
-    Heuristic scores derived from the attention matrix.
-    attention shape: (seq_len, seq_len), rows sum to ~1 after head averaging.
+    attention: (seq_len, seq_len)
     """
+
     seq_len = attention.shape[0]
     if seq_len < 2:
-        return Metrics(syntax=0.0, semantics=0.0, long_range=0.0)
+        return Metrics(0.0, 0.0, 0.0)
 
-    # syntax: mass on immediate neighbors (±1 position)
-    local = 0.0
-    count = 0
-    for i in range(seq_len):
-        for j in range(max(0, i - 1), min(seq_len, i + 2)):
-            local += attention[i, j].item()
-            count += 1
-    syntax = local / count if count else 0.0
+    # -------------------------------------------------
+    # 1. Locality (vectorized)
+    # -------------------------------------------------
+    i_idx = torch.arange(seq_len).unsqueeze(1)
+    j_idx = torch.arange(seq_len).unsqueeze(0)
 
-    # semantics: low entropy rows → focused "meaning"; high entropy → diffuse
-    entropy_sum = 0.0
-    for i in range(seq_len):
-        row = attention[i].clamp(min=1e-9)
-        entropy = -(row * row.log()).sum().item()
-        entropy_sum += entropy
-    max_entropy = torch.log(torch.tensor(float(seq_len))).item()
-    semantics = 1.0 - (entropy_sum / seq_len) / (max_entropy + 1e-6)
+    local_mask = (torch.abs(i_idx - j_idx) <= 1).float()
+    locality = (attention * local_mask).sum() / (local_mask.sum() + 1e-9)
 
-    # long_range: last token looking back at the first half of the sequence
-    mid = max(1, seq_len // 2)
-    long_range = float(attention[-1, :mid].mean())
+    # -------------------------------------------------
+    # 2. Attention focus (entropy-based, stable)
+    # -------------------------------------------------
+    entropy = -(attention * (attention + 1e-9).log()).sum(dim=1)
+    entropy_norm = entropy.mean() / torch.log(torch.tensor(float(seq_len)))
+
+    attention_focus = 1.0 - entropy_norm.item()
+
+    # -------------------------------------------------
+    # 3. Distance dependency (SOFT weighting, FIXED)
+    # -------------------------------------------------
+    dist = torch.abs(i_idx - j_idx).float()
+    dist = dist / (seq_len - 1 + 1e-9)
+
+    # soft weighting instead of hard threshold
+    distance_dependency = (attention * dist).sum() / (attention.sum() + 1e-9)
 
     return Metrics(
-        syntax=min(1.0, max(0.0, syntax)),
-        semantics=min(1.0, max(0.0, semantics)),
-        long_range=min(1.0, max(0.0, long_range)),
+        syntax=_clamp(locality.item()),
+        semantics=_clamp(attention_focus),
+        long_range=_clamp(distance_dependency.item()),
     )
 
 
-def run_transformer(input_ids: torch.Tensor) -> tuple[list[list[float]], Metrics]:
+def run_transformer(input_ids: torch.Tensor):
     model = _get_model()
 
     with torch.no_grad():
         outputs = model(input_ids, output_attentions=True)
-        # attentions: tuple of (batch, heads, seq, seq) per layer
-        # Take last layer, average heads → square matrix for the heatmap.
-        last_layer = outputs.attentions[-1].squeeze(0).mean(dim=0)
 
-    return last_layer.tolist(), _compute_transformer_metrics(last_layer)
+        last_layer = outputs.attentions[-1]
+        attention = last_layer.mean(dim=1).squeeze(0)
+
+    metrics = _compute_metrics(attention)
+
+    return attention.tolist(), metrics

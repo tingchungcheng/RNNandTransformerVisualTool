@@ -10,8 +10,12 @@
   "header": {
     "eyebrow": "交互式演示",
     "title": "RNN 与 Transformer",
-    "subtitle": "并排查看分词、LSTM 逐步处理，以及 Transformer 自注意力机制。",
+    "subtitle": "探索分词与 hidden state / attention 的归一化可视化投影 — 展示结构趋势，而非语义的绝对解释。",
     "newAnalysis": "← 新的分析"
+  },
+  "disclaimer": {
+    "title": "关于可视化",
+    "body": "以下为 attention / hidden state 的归一化可视化投影，用于展示结构趋势，不代表语义强度、重要性或神经元的绝对解释。"
   },
   "pipeline": {
     "ariaLabel": "分析进度",
@@ -22,7 +26,7 @@
   },
   "input": {
     "title": "输入文本",
-    "description": "输入一句话，对比 RNN（LSTM）与 Transformer 的处理方式。",
+    "description": "输入一句话，对比未训练 LSTM 与 BERT 如何处理相同 token — 仅作结构演示，非预测精度评估。",
     "chars": "{count} 字符",
     "placeholder": "试试：The cat sat on the mat…",
     "hint": "按 Ctrl+Enter 开始分析",
@@ -50,24 +54,38 @@
     "elapsed": "已用时 {time}",
     "total": "总计 {time}"
   },
+  "flow": {
+    "title": "信息流对比（示意）",
+    "description": "两种架构如何传递信息的示意图 — 仅供理解结构，非神经元级真实映射。",
+    "token": "token",
+    "state": "state",
+    "rnnCompress": "压缩",
+    "transformerConnect": "连接",
+    "rnnCaption": "token → state → state → state — 每步合并为单一隐藏向量（演示用 LSTM，未训练）。",
+    "transformerCaption": "token ↔ token ↔ token — 并行注意力路径（最后一层权重，归一化显示）。"
+  },
   "rnn": {
     "title": "RNN (LSTM)",
     "badge": "顺序处理",
-    "description": "未训练的 LSTM（64→128）逐 token 处理，隐藏状态从左到右累积。",
-    "hiddenState": "第 {step} 步隐藏状态",
-    "l2Norm": "L2 范数：{norm} · 维度 {dim}",
-    "metricsTitle": "RNN 指标"
+    "description": "未训练 LSTM（64→128）：每步输出 hidden state 向量。进度条与色块为向量范数/分量的归一化投影，不是语义分数。",
+    "hiddenState": "第 {step} 步 hidden state 投影",
+    "l2Norm": "相对 L2 范数：{norm} · 维度 {dim}",
+    "vectorTooltip": "分量 {value} — 仅颜色归一化展示，非神经元语义",
+    "metricsTitle": "RNN 趋势代理指标"
   },
   "transformer": {
     "title": "Transformer",
     "badge": "并行注意力",
-    "description": "BERT 自注意力（最后一层，所有层已计算）。颜色越亮表示注意力越强。",
-    "metricsTitle": "Transformer 指标"
+    "description": "最后一层 self-attention（多头均值），归一化后显示。格子越亮 = 在本矩阵内的相对权重 — 非绝对重要性或语义。",
+    "cellTooltip": "归一化 attention {from} → {to}：{value}（本投影中的相对权重）",
+    "metricsTitle": "Transformer 趋势代理指标"
   },
   "metrics": {
-    "syntax": "句法（局部结构）",
-    "semantics": "语义（含义分布）",
-    "longRange": "长距离依赖"
+    "note": "由 hidden state / attention 动态计算的启发式分数，clamp 至 [0,1] 便于展示。仅作趋势参考，非语言学 benchmark。",
+    "proxyTag": "代理",
+    "localPattern": "局部模式",
+    "spreadPattern": "分布模式",
+    "longRangePattern": "长程模式"
   },
   "errors": {
     "emptyText": "请输入要分析的文本。",

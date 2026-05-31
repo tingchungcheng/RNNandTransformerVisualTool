@@ -75,19 +75,19 @@ token IDs  →  BertModel  →  attentions (12 layers × 12 heads)
 ```
 
 - `attn_implementation="eager"` is required in Transformers v5+; SDPA backend does not return attention weights
-- Cell `[i, j]` = how much token `i` attends to token `j`
+- Cell `[i, j]` = normalized attention weight from token `i` to token `j` (relative within this matrix, not absolute importance)
 
 ### Metrics (both sides)
 
-These are **visualization proxies**, not linguistic benchmarks:
+**Important:** These are **normalized visualization proxies** for exploring structural trends. They are **not** linguistic benchmarks, semantic strength scores, or neuron-level explanations.
 
-| Metric | RNN intuition | Transformer intuition |
-|--------|---------------|----------------------|
-| **syntax** | How much hidden state changes step-to-step | Attention mass on adjacent tokens |
-| **semantics** | Cosine similarity between consecutive hiddens | Inverse of attention entropy (peaked vs spread) |
-| **long_range** | Final hidden vs mean of early hiddens | Last token attending to first half |
+| Proxy label | RNN source | Transformer source |
+|-------------|------------|---------------------|
+| **local pattern** | Step-to-step hidden-state change | Attention mass on adjacent tokens |
+| **spread pattern** | Consecutive hidden-state similarity | Attention entropy (peaked vs diffuse) |
+| **long-range pattern** | Final hidden vs early mean | Share of attention mass on token pairs farther than half the sequence (distance &gt; 50%) |
 
-Values are clamped to `[0, 1]` for the progress bars in the UI.
+Values are clamped to `[0, 1]` for progress bars only.
 
 ### API response shape — `backend/models/schemas.py`
 
@@ -140,7 +140,8 @@ Components read from context; no prop drilling.
 | `TokenAnimation.tsx` | Highlights tokens as `activeTokenIndex` advances |
 | `RNNPanel.tsx` | Timeline of LSTM steps + hidden-state norm bar + vector preview |
 | `TransformerPanel.tsx` | Attention heatmap (rows/cols = tokens) |
-| `MetricsPanel.tsx` | Shared bar chart for the three metrics |
+| `VisualizationDisclaimer.tsx` | Explains normalized projections vs semantic interpretation |
+| `MetricsPanel.tsx` | Shared bar chart for trend proxy metrics |
 | `SplitView.tsx` | Side-by-side layout |
 
 ### Types — `frontend/src/types/index.ts`

@@ -58,7 +58,7 @@ export function RNNPanel() {
                 style={{
                   background: `rgba(96, 165, 250, ${Math.min(1, Math.abs(v) * 2 + 0.1)})`,
                 }}
-                title={v.toFixed(4)}
+                title={t('rnn.vectorTooltip', { value: v.toFixed(4) })}
               />
             ))}
           </div>

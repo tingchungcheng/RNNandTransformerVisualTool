@@ -13,9 +13,9 @@ class TokenInfo(BaseModel):
 
 
 class Metrics(BaseModel):
-    syntax: float      # 0–1 heuristic, not a linguistic benchmark
-    semantics: float
-    long_range: float
+    syntax: float      # UI: local pattern proxy (0–1, not a linguistic score)
+    semantics: float   # UI: spread pattern proxy
+    long_range: float  # UI: long-range pattern proxy
 
 
 class RNNResult(BaseModel):
