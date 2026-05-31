@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "title": "RNN vs Transformer Demo"
+  },
+  "lang": {
+    "label": "Language",
+    "en": "English",
+    "zh-CN": "简体中文"
+  },
+  "header": {
+    "eyebrow": "Interactive demo",
+    "title": "RNN vs Transformer",
+    "subtitle": "See tokenization, sequential LSTM processing, and transformer self-attention side by side.",
+    "newAnalysis": "← New analysis"
+  },
+  "pipeline": {
+    "ariaLabel": "Analysis progress",
+    "input": "Input",
+    "analyze": "Analyze",
+    "tokenize": "Tokenize",
+    "visualize": "Visualize"
+  },
+  "input": {
+    "title": "Enter text",
+    "description": "Type a sentence to tokenize and compare how an RNN (LSTM) and a Transformer process it.",
+    "chars": "{count} chars",
+    "placeholder": "Try: The cat sat on the mat…",
+    "hint": "Press Ctrl+Enter to analyze",
+    "analyze": "Analyze →",
+    "analyzing": "Analyzing…",
+    "loadExample": "Load example",
+    "loadingExample": "Loading…"
+  },
+  "token": {
+    "title": "Tokenization",
+    "description": "Watch BERT WordPiece split your sentence into subword tokens.",
+    "fetching": "Fetching…",
+    "tokenCount": "{count} tokens",
+    "sourceLabel": "Source text",
+    "preparing": "Preparing tokenizer…",
+    "splitting": "Splitting into tokens",
+    "tooltip": "ID {id}: {text}",
+    "detailLabel": "Token detail",
+    "detailMeta": "· id {id}",
+    "statusTokenizing": "Tokenizing… revealing token {current} of {total}",
+    "statusComplete": "Tokenization complete — comparing models below"
+  },
+  "timing": {
+    "api": "API {time}",
+    "elapsed": "Elapsed {time}",
+    "total": "Total {time}"
+  },
+  "rnn": {
+    "title": "RNN (LSTM)",
+    "badge": "Sequential",
+    "description": "Untrained LSTM (64→128) processes one token at a time. Hidden state accumulates left-to-right.",
+    "hiddenState": "Hidden state @ step {step}",
+    "l2Norm": "L2 norm: {norm} · dim {dim}",
+    "metricsTitle": "RNN metrics"
+  },
+  "transformer": {
+    "title": "Transformer",
+    "badge": "Parallel attention",
+    "description": "BERT self-attention (all layers, last layer shown). Brighter cells = stronger attention.",
+    "metricsTitle": "Transformer metrics"
+  },
+  "metrics": {
+    "syntax": "Syntax (local structure)",
+    "semantics": "Semantics (meaning spread)",
+    "longRange": "Long-range dependency"
+  },
+  "errors": {
+    "emptyText": "Please enter some text to analyze.",
+    "backendFailed": "Failed to reach the backend. Make sure the FastAPI server is running on port 8000."
+  }
+}

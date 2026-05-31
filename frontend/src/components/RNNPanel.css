@@ -1,0 +1,110 @@
+.rnn-viz {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.rnn-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.rnn-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  opacity: 0.35;
+  transform: scale(0.96);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+    border-color 0.25s,
+    background 0.25s,
+    box-shadow 0.25s;
+}
+
+.rnn-step.done {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.rnn-step.current {
+  border-color: var(--rnn);
+  background: rgba(91, 156, 245, 0.12);
+  box-shadow: 0 0 0 2px rgba(91, 156, 245, 0.2), 0 4px 16px var(--rnn-glow);
+  transform: scale(1.04);
+  animation: rnnPulse 0.6s ease;
+}
+
+@keyframes rnnPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1.04); }
+}
+
+.step-num {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.hidden-state-box {
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+}
+
+.hidden-state-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 0.55rem;
+}
+
+.hidden-state-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.hidden-state-fill.rnn-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, var(--rnn));
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+  box-shadow: 0 0 12px var(--rnn-glow);
+}
+
+.hidden-state-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-bottom: 0.65rem;
+}
+
+.vector-preview {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+}
+
+.vector-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  min-height: 12px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.vector-cell:hover {
+  transform: scale(1.2);
+  z-index: 1;
+}

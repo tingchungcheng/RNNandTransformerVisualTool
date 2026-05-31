@@ -1,0 +1,213 @@
+:root {
+  --bg: #06080f;
+  --bg-elevated: #0c1019;
+  --surface: rgba(16, 22, 36, 0.72);
+  --surface-solid: #101624;
+  --surface-hover: rgba(24, 32, 52, 0.9);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.14);
+  --text: #f0f4fc;
+  --muted: #8b95a8;
+  --rnn: #5b9cf5;
+  --rnn-glow: rgba(91, 156, 245, 0.45);
+  --transformer: #a78bfa;
+  --transformer-glow: rgba(167, 139, 250, 0.45);
+  --accent: #34d399;
+  --accent-glow: rgba(52, 211, 153, 0.4);
+  --token-special: #fbbf24;
+  --token-subword: #818cf8;
+  --danger: #f87171;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --font: 'DM Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font);
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 90% 60% at 10% -10%, rgba(91, 156, 245, 0.14), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 95% 5%, rgba(167, 139, 250, 0.12), transparent 45%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(52, 211, 153, 0.06), transparent 50%),
+    var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 1rem 1.15rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+textarea::placeholder {
+  color: var(--muted);
+}
+
+textarea:focus {
+  outline: none;
+  border-color: rgba(91, 156, 245, 0.5);
+  box-shadow: 0 0 0 3px rgba(91, 156, 245, 0.15);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 0.65rem 1.25rem;
+  background: var(--surface-solid);
+  color: var(--text);
+  font-weight: 500;
+  transition: transform 0.15s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--border-bright);
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+  font-weight: 600;
+}
+
+.btn.primary:hover:not(:disabled) {
+  box-shadow: 0 6px 28px rgba(59, 130, 246, 0.45);
+  filter: brightness(1.06);
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.panel {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--shadow);
+  animation: panelEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes panelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.panel-desc {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.error-msg {
+  margin: 0.85rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: var(--danger);
+  font-size: 0.88rem;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.scroll-stage {
+  scroll-margin-top: 1.25rem;
+}
+
+.scroll-highlight {
+  animation: scrollHighlight 1.2s ease;
+}
+
+@keyframes scrollHighlight {
+  0% {
+    box-shadow: var(--shadow), 0 0 0 0 rgba(52, 211, 153, 0.45);
+  }
+  30% {
+    box-shadow: var(--shadow), 0 0 0 4px rgba(52, 211, 153, 0.25);
+  }
+  100% {
+    box-shadow: var(--shadow);
+  }
+}

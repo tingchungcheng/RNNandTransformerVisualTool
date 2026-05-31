@@ -1,0 +1,118 @@
+.pipeline {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.25rem;
+  animation: panelEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 140px;
+  opacity: 0.4;
+  transition: opacity 0.35s ease;
+}
+
+.pipeline-step.done,
+.pipeline-step.active {
+  opacity: 1;
+}
+
+.pipeline-dot-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.pipeline-dot {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--surface-solid);
+  border: 2px solid var(--border);
+  color: var(--muted);
+  z-index: 1;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+}
+
+.pipeline-step.active .pipeline-dot {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2), 0 0 20px var(--accent-glow);
+  transform: scale(1.1);
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+.pipeline-step.done .pipeline-dot {
+  border-color: var(--accent);
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--accent);
+}
+
+@keyframes pulseDot {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2), 0 0 20px var(--accent-glow); }
+  50% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.12), 0 0 28px var(--accent-glow); }
+}
+
+.pipeline-line {
+  flex: 1;
+  height: 2px;
+  margin: 0 0.25rem;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-step.done .pipeline-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--accent), rgba(52, 211, 153, 0.4));
+  animation: lineFill 0.5s ease forwards;
+}
+
+@keyframes lineFill {
+  from { transform: scaleX(0); transform-origin: left; }
+  to { transform: scaleX(1); transform-origin: left; }
+}
+
+.pipeline-label {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pipeline-step.active .pipeline-label,
+.pipeline-step.done .pipeline-label {
+  color: var(--text);
+}
+
+@media (max-width: 520px) {
+  .pipeline-label {
+    font-size: 0.62rem;
+  }
+
+  .pipeline-dot {
+    width: 1.65rem;
+    height: 1.65rem;
+    font-size: 0.65rem;
+  }
+}

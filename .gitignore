@@ -1,0 +1,55 @@
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+*.local
+
+# --- Frontend (Vite / React) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# --- Backend (Python / FastAPI) ---
+backend/.venv/
+backend/.venv*/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# --- ML model caches (local downloads) ---
+.cache/
+hub/
+
+# --- Logs & coverage ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+htmlcov/
+.coverage
+
+# --- IDE & editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db

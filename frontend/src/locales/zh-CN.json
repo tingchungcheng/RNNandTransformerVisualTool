@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "title": "RNN 与 Transformer 演示"
+  },
+  "lang": {
+    "label": "语言",
+    "en": "English",
+    "zh-CN": "简体中文"
+  },
+  "header": {
+    "eyebrow": "交互式演示",
+    "title": "RNN 与 Transformer",
+    "subtitle": "并排查看分词、LSTM 逐步处理，以及 Transformer 自注意力机制。",
+    "newAnalysis": "← 新的分析"
+  },
+  "pipeline": {
+    "ariaLabel": "分析进度",
+    "input": "输入",
+    "analyze": "分析",
+    "tokenize": "分词",
+    "visualize": "可视化"
+  },
+  "input": {
+    "title": "输入文本",
+    "description": "输入一句话，对比 RNN（LSTM）与 Transformer 的处理方式。",
+    "chars": "{count} 字符",
+    "placeholder": "试试：The cat sat on the mat…",
+    "hint": "按 Ctrl+Enter 开始分析",
+    "analyze": "分析 →",
+    "analyzing": "分析中…",
+    "loadExample": "加载示例",
+    "loadingExample": "加载中…"
+  },
+  "token": {
+    "title": "分词",
+    "description": "观看 BERT WordPiece 将句子拆分为子词 token。",
+    "fetching": "获取中…",
+    "tokenCount": "{count} 个 token",
+    "sourceLabel": "原文",
+    "preparing": "准备分词器…",
+    "splitting": "拆分为 token",
+    "tooltip": "ID {id}：{text}",
+    "detailLabel": "Token 详情",
+    "detailMeta": "· id {id}",
+    "statusTokenizing": "分词中… 正在显示第 {current} / {total} 个 token",
+    "statusComplete": "分词完成 — 下方为模型对比"
+  },
+  "timing": {
+    "api": "API {time}",
+    "elapsed": "已用时 {time}",
+    "total": "总计 {time}"
+  },
+  "rnn": {
+    "title": "RNN (LSTM)",
+    "badge": "顺序处理",
+    "description": "未训练的 LSTM（64→128）逐 token 处理，隐藏状态从左到右累积。",
+    "hiddenState": "第 {step} 步隐藏状态",
+    "l2Norm": "L2 范数：{norm} · 维度 {dim}",
+    "metricsTitle": "RNN 指标"
+  },
+  "transformer": {
+    "title": "Transformer",
+    "badge": "并行注意力",
+    "description": "BERT 自注意力（最后一层，所有层已计算）。颜色越亮表示注意力越强。",
+    "metricsTitle": "Transformer 指标"
+  },
+  "metrics": {
+    "syntax": "句法（局部结构）",
+    "semantics": "语义（含义分布）",
+    "longRange": "长距离依赖"
+  },
+  "errors": {
+    "emptyText": "请输入要分析的文本。",
+    "backendFailed": "无法连接后端，请确认 FastAPI 服务已在 8000 端口运行。"
+  }
+}

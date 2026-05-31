@@ -1,0 +1,100 @@
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  animation: panelEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app-header-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    flex-direction: column;
+  }
+
+  .app-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(1.85rem, 5vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff 30%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .subtitle {
+    white-space: normal;
+    max-width: 100%;
+  }
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
