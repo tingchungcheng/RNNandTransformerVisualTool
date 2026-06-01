@@ -2,6 +2,8 @@
 
 > **Note:** Attention weights and hidden states are normalized visualization projections. Structure probes and heatmaps illustrate internal geometry — not semantic ground truth. Use **val perplexity** for model quality.
 
+![alt text](https://github.com/tingchungcheng/RNNandTransformerVisualTool/blob/main/RNNTransformerDiff.png)
+
 ## Architecture
 
 - **Frontend** — React + Vite + Context API (`frontend/`)
