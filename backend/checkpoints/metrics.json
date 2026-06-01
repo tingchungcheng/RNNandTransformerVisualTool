@@ -1,0 +1,13 @@
+{
+  "lstm": {
+    "val_loss": 7.791101932525635,
+    "val_perplexity": 2418.981668683313,
+    "epochs": 15
+  },
+  "transformer": {
+    "val_loss": 7.60555632909139,
+    "val_perplexity": 2009.3294312381379,
+    "epochs": 15
+  },
+  "device": "cuda (NVIDIA GeForce RTX 3070)"
+}

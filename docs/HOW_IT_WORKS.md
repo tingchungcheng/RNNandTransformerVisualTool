@@ -1,6 +1,6 @@
 # How the code works
 
-Educational demo: same text → tokenize once → run through an untrained LSTM and BERT in parallel → visualize internals in the browser.
+Educational demo: same text → tokenize once → run tiny trained LSTM and Transformer in parallel → visualize internals and next-token predictions in the browser.
 
 ## Big picture
 
@@ -11,12 +11,13 @@ User text
 ┌─────────────────────────────────────┐
 │  FastAPI  POST /api/analyze         │
 │  1. BERT tokenizer → token IDs      │
-│  2. RNN engine  → hidden states     │
-│  3. BERT model  → attention matrix  │
+│  2. LSTM engine   → hidden states   │
+│  3. TF engine     → attention       │
+│  4. Both          → next-token top-k│
 └─────────────────────────────────────┘
     │
     ▼
-JSON response → React animates tokens, LSTM steps, attention heatmap
+JSON response → React animates tokens, predictions, LSTM steps, attention heatmap
 ```
 
 Both engines receive the **same** `input_ids` tensor so the split-screen comparison is aligned token-for-token.
@@ -27,8 +28,6 @@ Both engines receive the **same** `input_ids` tensor so the split-screen compari
 
 ### Entry point — `backend/main.py`
 
-Single analysis endpoint:
-
 | Route | Purpose |
 |-------|---------|
 | `GET /api/health` | Liveness check |
@@ -37,57 +36,67 @@ Single analysis endpoint:
 Flow inside `analyze()`:
 
 1. `encode_text(text)` — BERT WordPiece tokenization, max 64 tokens, adds `[CLS]` / `[SEP]`
-2. Build `TokenInfo` list for the UI (id + string like `the`, `##ing`, `[CLS]`)
-3. `run_rnn(input_ids)` — LSTM hidden state per timestep
-4. `run_transformer(input_ids)` — self-attention matrix
+2. Build `TokenInfo` list for the UI
+3. `run_rnn(input_ids)` — LSTM hidden states + structure probes + next-token prediction
+4. `run_transformer(input_ids)` — self-attention matrix + structure probes + next-token prediction
 5. Return one JSON object (see `models/schemas.py`)
 
-Models are loaded **lazily** on first request and cached in module globals.
+Models load **lazily** on first request from `backend/checkpoints/`.
+
+### Models — `backend/models/`
+
+| File | Role |
+|------|------|
+| `lstm_model.py` | Tiny LSTM (embed 64, hidden 128, 1 layer) + LM head |
+| `transformer_model.py` | Tiny causal Transformer (2 layers, 4 heads, FFN 256) + LM head |
+| `constants.py` | Hyperparameters, checkpoint paths, WikiText file locations |
+| `schemas.py` | API request/response types |
+
+### Training — `backend/training/`
+
+```bash
+cd backend
+python -m training.train --device cuda --epochs 15
+```
+
+- `dataset.py` — loads `wiki.train.raw` locally (or HuggingFace fallback), tokenizes with BERT vocab
+- `train.py` — trains both models, saves best val checkpoint to `backend/checkpoints/`
+- Metrics written to `checkpoints/metrics.json` (val loss, val perplexity)
 
 ### Tokenizer — `backend/engines/tokenizer.py`
 
-- Uses `bert-base-uncased` for both engines
-- `get_tokenizer()` — cached singleton (`@lru_cache`)
-- `encode_text()` — shared encoding so RNN and Transformer always see identical tokens
+- Uses `bert-base-uncased` vocab for both models (30522 tokens)
+- Shared encoding so LSTM and Transformer always see identical tokens
 
 ### RNN engine — `backend/engines/rnn_engine.py`
 
-**Not trained.** Goal is to show sequential computation, not accuracy.
-
 ```
-token IDs  →  Embedding(30522, 64)  →  LSTM(64, 128)  →  hidden states
-              (random init)              (random init)      shape: [seq_len, 128]
+token IDs  →  TinyLSTM  →  hidden states [seq_len, 128]
+                         →  next-token logits
 ```
 
-- `torch.manual_seed(42)` on first load so hidden states are reproducible across restarts
-- `run_rnn()` returns:
-  - `hidden_states`: list of 128-d vectors, one per token (including `[CLS]`/`[SEP]`)
-  - `metrics`: heuristic scores derived from hidden-state dynamics (see below)
+Loads `checkpoints/lstm.pt`. Returns hidden states, structure probes, and top-5 next-token predictions.
 
 ### Transformer engine — `backend/engines/transformer_engine.py`
 
-Uses pretrained **BERT** (`bert-base-uncased`) only to expose real attention weights — no fine-tuning.
-
 ```
-token IDs  →  BertModel  →  attentions (12 layers × 12 heads)
-                              we take last layer, mean over heads
-                              →  [seq_len, seq_len] matrix
+token IDs  →  TinyTransformer  →  last-layer attention [seq_len, seq_len]
+                                →  next-token logits
 ```
 
-- `attn_implementation="eager"` is required in Transformers v5+; SDPA backend does not return attention weights
-- Cell `[i, j]` = normalized attention weight from token `i` to token `j` (relative within this matrix, not absolute importance)
+Loads `checkpoints/transformer.pt`. Causal self-attention from the final layer (mean over heads).
 
-### Metrics (both sides)
+### Structure probes (both sides)
 
-**Important:** These are **normalized visualization proxies** for exploring structural trends. They are **not** linguistic benchmarks, semantic strength scores, or neuron-level explanations.
+**Not linguistic scores.** Compare **val perplexity** (prediction panel) for model quality.
 
-| Proxy label | RNN source | Transformer source |
-|-------------|------------|---------------------|
-| **local pattern** | Step-to-step hidden-state change | Attention mass on adjacent tokens |
-| **spread pattern** | Consecutive hidden-state similarity | Attention entropy (peaked vs diffuse) |
-| **long-range pattern** | Final hidden vs early mean | Share of attention mass on token pairs farther than half the sequence (distance &gt; 50%) |
+| Probe | LSTM source | Transformer source |
+|-------|-------------|---------------------|
+| Step change / Adjacent attention | Step-to-step hidden-state change | Attention mass on adjacent tokens |
+| Adjacent similarity / Attention focus | Consecutive hidden-state similarity | 1 − normalized row entropy |
+| Late ↔ start alignment / Mean look-back distance | Late hidden states vs initial state | Normalized mean attention distance per query |
 
-Values are clamped to `[0, 1]` for progress bars only.
+Probes are **architecture-specific** — do not compare bars side-by-side across columns.
 
 ### API response shape — `backend/models/schemas.py`
 
@@ -96,11 +105,13 @@ Values are clamped to `[0, 1]` for progress bars only.
   "tokens": [{ "id": 101, "text": "[CLS]" }, ...],
   "rnn": {
     "hidden_states": [[0.1, -0.3, ...], ...],
-    "metrics": { "syntax": 0.65, "semantics": 0.79, "long_range": 0.74 }
+    "metrics": { "syntax": 0.09, "semantics": 0.97, "long_range": 0.44 },
+    "prediction": { "top_k": [...], "val_perplexity": 2419.0 }
   },
   "transformer": {
     "attention": [[0.12, 0.08, ...], ...],
-    "metrics": { "syntax": 0.15, "semantics": 0.62, "long_range": 0.27 }
+    "metrics": { "syntax": 0.10, "semantics": 0.29, "long_range": 0.25 },
+    "prediction": { "top_k": [...], "val_perplexity": 2009.0 }
   }
 }
 ```
@@ -111,42 +122,32 @@ Values are clamped to `[0, 1]` for progress bars only.
 
 ### Dev proxy — `frontend/vite.config.ts`
 
-Browser calls `/api/analyze` → Vite proxies to `http://localhost:8000`. No CORS setup needed during dev.
+Browser calls `/api/analyze` → Vite proxies to `http://localhost:8000`.
 
 ### State machine — `frontend/src/context/AppContext.tsx`
 
-App phases:
-
 ```
-input  →  tokenizing  →  results
-  ↑                           │
-  └──────── reset ────────────┘
+input  →  loading  →  tokenizing  →  results
+  ↑                                      │
+  └──────────── reset ───────────────────┘
 ```
-
-On **submit**:
-
-1. `POST /api/analyze` via `api/client.ts`
-2. Store full response in `result`
-3. **Token animation** — increment `activeTokenIndex` every 350ms
-4. Switch to `results`, then **RNN animation** — increment `rnnStep` every 400ms
-
-Components read from context; no prop drilling.
 
 ### UI components
 
 | File | Role |
 |------|------|
 | `TextInput.tsx` | Textarea + Analyze / Load example |
-| `TokenAnimation.tsx` | Highlights tokens as `activeTokenIndex` advances |
-| `RNNPanel.tsx` | Timeline of LSTM steps + hidden-state norm bar + vector preview |
-| `TransformerPanel.tsx` | Attention heatmap (rows/cols = tokens) |
-| `VisualizationDisclaimer.tsx` | Explains normalized projections vs semantic interpretation |
-| `MetricsPanel.tsx` | Shared bar chart for trend proxy metrics |
+| `TokenAnimation.tsx` | Highlights tokens as they appear |
+| `PredictionCompare.tsx` | Side-by-side next-token top-k + val PPL |
+| `InfoFlowCompare.tsx` | Schematic RNN chain vs Transformer mesh |
+| `RNNPanel.tsx` | LSTM step timeline + hidden-state preview |
+| `TransformerPanel.tsx` | Attention heatmap |
+| `MetricsPanel.tsx` | Architecture-specific structure probes |
 | `SplitView.tsx` | Side-by-side layout |
 
 ### Types — `frontend/src/types/index.ts`
 
-Mirrors the backend Pydantic models. Keep in sync if you change the API.
+Mirrors the backend Pydantic models. Keep in sync when changing the API.
 
 ---
 
@@ -154,30 +155,39 @@ Mirrors the backend Pydantic models. Keep in sync if you change the API.
 
 ```
 backend/
-  main.py                 # FastAPI routes
-  models/schemas.py       # Request/response types
+  main.py
+  checkpoints/          # lstm.pt, transformer.pt, metrics.json (committed)
+  models/
+    lstm_model.py
+    transformer_model.py
+    constants.py
+    schemas.py
   engines/
-    tokenizer.py          # Shared BERT tokenizer
-    rnn_engine.py         # Embedding + LSTM
-    transformer_engine.py # BERT attention
+    tokenizer.py
+    rnn_engine.py
+    transformer_engine.py
+    prediction.py
+    device.py
+  training/
+    train.py
+    dataset.py
 
 frontend/src/
-  main.tsx                # React entry, wraps AppProvider
-  App.tsx                 # Layout shell
-  context/AppContext.tsx  # Global state + animation timing
-  api/client.ts           # fetch wrapper
-  types/index.ts          # TS interfaces
-  components/             # UI panels
+  App.tsx
+  context/AppContext.tsx
+  api/client.ts
+  types/index.ts
+  components/
 ```
 
 ---
 
 ## Common changes
 
-**Use a different transformer** — edit `MODEL_NAME` in `transformer_engine.py` and `tokenizer.py` (must match).
+**Retrain models** — `python -m training.train` from `backend/`; restart uvicorn to reload checkpoints.
 
-**Longer sequences** — raise `MAX_SEQ_LEN` in `tokenizer.py`; heatmap gets large quickly in the browser.
+**GPU inference** — set `TORCH_DEVICE=cuda` before starting uvicorn.
 
-**Faster/slower animations** — change the `350` / `400` ms intervals in `AppContext.tsx`.
+**Longer sequences** — raise `MAX_SEQ_LEN` in `tokenizer.py`; heatmap grows as seq_len².
 
-**Add Q/K/V views** — hook BERT attention modules in `transformer_engine.py` and extend `AnalyzeResponse` + frontend heatmap tabs.
+**Faster/slower animations** — change intervals in `AppContext.tsx`.

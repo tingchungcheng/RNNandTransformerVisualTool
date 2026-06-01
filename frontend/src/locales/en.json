@@ -26,7 +26,7 @@
   },
   "input": {
     "title": "Enter text",
-    "description": "Type a sentence to compare how an untrained LSTM and BERT process the same tokens — for illustration, not prediction accuracy.",
+    "description": "Type a prefix (e.g. “The apple is”) — both tiny models trained on WikiText-2 predict the next token while the panels below show internal dynamics.",
     "chars": "{count} chars",
     "placeholder": "Try: The cat sat on the mat…",
     "hint": "Press Ctrl+Enter to analyze",
@@ -60,32 +60,58 @@
     "token": "token",
     "state": "state",
     "rnnCompress": "Compressed",
+    "rnnSequential": "Sequential",
     "transformerConnect": "Connected",
-    "rnnCaption": "token → state → state → state — sequential merge into one hidden vector per step (demo LSTM, untrained).",
-    "transformerCaption": "token ↔ token ↔ token — pairwise attention paths in parallel (last-layer weights, normalized for display)."
+    "transformerParallel": "Parallel",
+    "stateStep": "h{step}",
+    "meshOmitted": "Cross-links omitted for long sequences — see attention heatmap below.",
+    "rnnCaption": "One token at a time: each step merges into a new hidden state hₜ (trained tiny LSTM). Watch the chain grow left → right.",
+    "transformerCaption": "All tokens at once: curved arcs are pairwise attention paths in parallel (causal self-attention, last layer)."
+  },
+  "prediction": {
+    "title": "Next-token prediction",
+    "description": "Both models were trained on WikiText-2 for next-token prediction. Lower validation perplexity = better language modeling.",
+    "inputLabel": "Input prefix",
+    "topGuess": "Top guess",
+    "valPpl": "Val perplexity",
+    "winner": "Lower PPL",
+    "note": "Predictions use the BERT tokenizer vocabulary. Try “The apple is” — models may suggest continuations like “,”, “a”, or “not” depending on training."
   },
   "rnn": {
     "title": "RNN (LSTM)",
     "badge": "Sequential",
-    "description": "Untrained LSTM (64→128): hidden-state vectors per step. The bar and color grid are normalized projections of vector magnitude / components — not semantic scores.",
+    "description": "Tiny LSTM (64→128, WikiText-2): hidden-state vectors per step. The bar and color grid are normalized projections of vector magnitude / components — not semantic scores.",
     "hiddenState": "Hidden state projection @ step {step}",
     "l2Norm": "Relative L2 norm: {norm} · dim {dim}",
     "vectorTooltip": "Component {value} — normalized color only, not neuron activation semantics",
-    "metricsTitle": "RNN trend proxies"
+    "metricsTitle": "LSTM structure probes"
   },
   "transformer": {
     "title": "Transformer",
     "badge": "Parallel attention",
-    "description": "Last-layer self-attention (mean over heads), normalized for display. Cell brightness shows attention routing strength from query token (Y-axis) to key token (X-axis).",
+    "description": "Tiny causal Transformer (2 layers, 4 heads). Self-attention from the last layer, normalized for display. Cell brightness shows attention routing strength from query token (Y-axis) to key token (X-axis).",
     "cellTooltip": "Normalized attention {from} → {to}: {value} (relative weight in this projection)",
-    "metricsTitle": "Transformer trend proxies"
+    "metricsTitle": "Transformer structure probes"
   },
   "metrics": {
-    "note": "Heuristic scores derived from hidden-state / attention dynamics, clamped to [0,1] for display. Trend indicators only — not linguistic benchmarks.",
-    "proxyTag": "proxy",
-    "localPattern": "Local pattern",
-    "spreadPattern": "Spread pattern",
-    "longRangePattern": "Long-range pattern"
+    "note": "Architecture-specific structure probes (not directly comparable side-by-side). For model quality, use val perplexity in the prediction panel above.",
+    "probeTag": "probe",
+    "rnn": {
+      "local": "Step change",
+      "localHint": "Average magnitude of hidden-state updates between consecutive tokens.",
+      "spread": "Adjacent similarity",
+      "spreadHint": "Cosine similarity between consecutive hidden states — sequential smoothness.",
+      "longRange": "Late ↔ start alignment",
+      "longRangeHint": "How similar late hidden states are to the first step — drops when early context is washed out along the chain."
+    },
+    "transformer": {
+      "local": "Adjacent attention",
+      "localHint": "Share of attention mass on neighboring token pairs.",
+      "spread": "Attention focus",
+      "spreadHint": "How peaked each row is (1 − normalized entropy) — sharp vs diffuse routing.",
+      "longRange": "Mean look-back distance",
+      "longRangeHint": "Average token distance each query attends to — direct access lets later tokens reach farther back in one step."
+    }
   },
   "errors": {
     "emptyText": "Please enter some text to analyze.",

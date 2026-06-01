@@ -13,19 +13,32 @@ class TokenInfo(BaseModel):
 
 
 class Metrics(BaseModel):
-    syntax: float      # UI: local pattern proxy (0–1, not a linguistic score)
-    semantics: float   # UI: spread pattern proxy
-    long_range: float  # UI: long-range pattern proxy
+    syntax: float      # UI: local structure probe (0–1, not a linguistic score)
+    semantics: float   # UI: spread / focus probe
+    long_range: float  # UI: distant linkage / reach probe
+
+
+class TokenPrediction(BaseModel):
+    token: str
+    id: int
+    probability: float
+
+
+class ModelPrediction(BaseModel):
+    top_k: list[TokenPrediction]
+    val_perplexity: float | None = None
 
 
 class RNNResult(BaseModel):
     hidden_states: list[list[float]]  # [timestep][128 floats]
     metrics: Metrics
+    prediction: ModelPrediction
 
 
 class TransformerResult(BaseModel):
     attention: list[list[float]]  # [query_token][key_token], rows sum ≈ 1
     metrics: Metrics
+    prediction: ModelPrediction
 
 
 class AnalyzeResponse(BaseModel):

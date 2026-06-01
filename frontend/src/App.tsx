@@ -1,6 +1,7 @@
 import { TextInput } from './components/TextInput'
 import { TokenAnimation } from './components/TokenAnimation'
 import { InfoFlowCompare } from './components/InfoFlowCompare'
+import { PredictionCompare } from './components/PredictionCompare'
 import { VisualizationDisclaimer } from './components/VisualizationDisclaimer'
 import { SplitView } from './components/SplitView'
 import { PipelineSteps } from './components/PipelineSteps'
@@ -41,6 +42,7 @@ export default function App() {
         <TokenAnimation />
         <VisualizationDisclaimer />
         <InfoFlowCompare />
+        <PredictionCompare />
         <SplitView />
       </main>
     </div>

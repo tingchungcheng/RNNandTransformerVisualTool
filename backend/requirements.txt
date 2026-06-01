@@ -2,4 +2,5 @@ fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 torch>=2.0.0
 transformers>=4.46.0
+datasets>=3.0.0
 pydantic>=2.0.0

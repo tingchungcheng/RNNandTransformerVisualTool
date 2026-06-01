@@ -32,6 +32,11 @@ build/
 .cache/
 hub/
 
+# --- Training data (optional local copy; checkpoints are committed) ---
+wiki.train.raw
+wiki.valid.raw
+wiki.test.raw
+
 # --- Logs & coverage ---
 *.log
 npm-debug.log*

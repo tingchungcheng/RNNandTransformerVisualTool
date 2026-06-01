@@ -54,13 +54,21 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     ]
 
     try:
-        hidden_states, rnn_metrics = run_rnn(input_ids)
-        attention, transformer_metrics = run_transformer(input_ids)
+        hidden_states, rnn_metrics, rnn_prediction = run_rnn(input_ids)
+        attention, transformer_metrics, tf_prediction = run_transformer(input_ids)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Inference failed: {exc}") from exc
 
     return AnalyzeResponse(
         tokens=tokens,
-        rnn=RNNResult(hidden_states=hidden_states, metrics=rnn_metrics),
-        transformer=TransformerResult(attention=attention, metrics=transformer_metrics),
+        rnn=RNNResult(
+            hidden_states=hidden_states,
+            metrics=rnn_metrics,
+            prediction=rnn_prediction,
+        ),
+        transformer=TransformerResult(
+            attention=attention,
+            metrics=transformer_metrics,
+            prediction=tf_prediction,
+        ),
     )

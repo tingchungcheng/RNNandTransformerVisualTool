@@ -1,47 +1,50 @@
 """
-Simple LSTM engine — random init, no pretraining.
+Tiny LSTM engine — trained on WikiText-2 for next-token prediction.
 
-Purpose: expose sequential hidden-state evolution, not prediction accuracy.
-Pipeline: token ID → Embedding → LSTM → one hidden vector per timestep.
+Pipeline: token ID → Embedding → LSTM → hidden states + next-token logits.
 """
 
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 
-from models.schemas import Metrics
+from engines.device import inference_device
+from engines.prediction import load_training_metrics, predict_next
+from models.constants import LSTM_CHECKPOINT
+from models.lstm_model import TinyLSTM
+from models.schemas import Metrics, ModelPrediction
 
-INPUT_SIZE = 64   # embedding dim fed into LSTM
-HIDDEN_SIZE = 128 # LSTM hidden dim returned to the frontend
-
-
-class LSTMEngine(nn.Module):
-    def __init__(self, vocab_size: int) -> None:
-        super().__init__()
-        # Embedding maps discrete token IDs to continuous vectors LSTM can consume.
-        self.embedding = nn.Embedding(vocab_size, INPUT_SIZE)
-        self.lstm = nn.LSTM(INPUT_SIZE, HIDDEN_SIZE, batch_first=True)
-
-    def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
-        embedded = self.embedding(input_ids)  # (batch, seq, input_size)
-        outputs, _ = self.lstm(embedded)      # outputs: (batch, seq, hidden_size)
-        return outputs
+_engine: TinyLSTM | None = None
+_device: torch.device | None = None
+_training_ppl: float | None = None
 
 
-_engine: LSTMEngine | None = None
+def _get_engine() -> tuple[TinyLSTM, torch.device]:
+    """Lazy singleton — loads trained checkpoint on first call."""
+    global _engine, _device, _training_ppl
+    if _engine is not None and _device is not None:
+        return _engine, _device
 
+    from engines.tokenizer import get_tokenizer
 
-def _get_engine() -> LSTMEngine:
-    """Lazy singleton — model loads on first /api/analyze call."""
-    global _engine
-    if _engine is None:
-        from engines.tokenizer import get_tokenizer
+    device = inference_device()
+    vocab_size = get_tokenizer().vocab_size
+    engine = TinyLSTM(vocab_size)
 
-        torch.manual_seed(42)  # reproducible random weights for demos
-        _engine = LSTMEngine(get_tokenizer().vocab_size)
-        _engine.eval()
-    return _engine
+    if LSTM_CHECKPOINT.is_file():
+        ckpt = torch.load(LSTM_CHECKPOINT, map_location=device, weights_only=True)
+        engine.load_state_dict(ckpt["state_dict"])
+    else:
+        torch.manual_seed(42)
+
+    metrics = load_training_metrics()
+    if metrics and "lstm" in metrics:
+        _training_ppl = metrics["lstm"].get("val_perplexity")
+
+    engine.to(device).eval()
+    _engine = engine
+    _device = device
+    return engine, device
 
 
 def _cosine(a: torch.Tensor, b: torch.Tensor) -> float:
@@ -53,37 +56,44 @@ def _cosine(a: torch.Tensor, b: torch.Tensor) -> float:
 
 def _compute_rnn_metrics(hidden: torch.Tensor) -> Metrics:
     """
-    Heuristic scores for the UI bars — not trained classifiers.
+    Structure probes for the UI bars — not linguistic scores.
     hidden shape: (seq_len, hidden_size)
     """
     seq_len = hidden.shape[0]
     if seq_len < 2:
         return Metrics(syntax=0.0, semantics=0.0, long_range=0.0)
 
-    # syntax: average step-to-step change magnitude (local dynamics)
+    # Local: average step-to-step hidden-state change (normalized).
     deltas = hidden[1:] - hidden[:-1]
     syntax = float(deltas.norm(dim=1).mean() / (hidden.norm(dim=1).mean() + 1e-6))
 
-    # spread pattern proxy: consecutive hidden-state similarity
+    # Spread: consecutive hidden-state similarity (smooth sequential states).
     sims = [_cosine(hidden[i], hidden[i + 1]) for i in range(seq_len - 1)]
     semantics = float(sum(abs(s) for s in sims) / len(sims))
 
-    # long_range: does the final state still relate to early context?
-    mid = max(1, seq_len // 2)
-    early = hidden[:mid].mean(dim=0)
-    long_range = abs(_cosine(hidden[-1], early))
+    # Long-range: late hidden states vs the initial state (sequential path decay).
+    third = max(1, seq_len // 3)
+    late_to_start = [abs(_cosine(hidden[i], hidden[0])) for i in range(2 * third, seq_len)]
+    long_range = min(1.0, sum(late_to_start) / len(late_to_start)) if late_to_start else 0.0
 
     return Metrics(
         syntax=min(1.0, syntax),
         semantics=min(1.0, semantics),
-        long_range=min(1.0, long_range),
+        long_range=long_range,
     )
 
 
-def run_rnn(input_ids: torch.Tensor) -> tuple[list[list[float]], Metrics]:
-    engine = _get_engine()
+def run_rnn(input_ids: torch.Tensor) -> tuple[list[list[float]], Metrics, ModelPrediction]:
+    engine, device = _get_engine()
+    ids = input_ids.to(device)
 
     with torch.no_grad():
-        hidden = engine(input_ids).squeeze(0)  # (seq_len, hidden_size)
+        hidden = engine.hidden_states(ids).squeeze(0).cpu()
+        prediction = predict_next(
+            engine,
+            ids,
+            is_transformer=False,
+            training_perplexity=_training_ppl,
+        )
 
-    return hidden.tolist(), _compute_rnn_metrics(hidden)
+    return hidden.tolist(), _compute_rnn_metrics(hidden), prediction

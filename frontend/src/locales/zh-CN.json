@@ -26,7 +26,7 @@
   },
   "input": {
     "title": "输入文本",
-    "description": "输入一句话，对比未训练 LSTM 与 BERT 如何处理相同 token — 仅作结构演示，非预测精度评估。",
+    "description": "输入前缀（如 “The apple is”）— 两个在 WikiText-2 上训练的小模型会预测下一个 token，下方面板展示内部动态。",
     "chars": "{count} 字符",
     "placeholder": "试试：The cat sat on the mat…",
     "hint": "按 Ctrl+Enter 开始分析",
@@ -60,32 +60,58 @@
     "token": "token",
     "state": "state",
     "rnnCompress": "压缩",
+    "rnnSequential": "顺序",
     "transformerConnect": "连接",
-    "rnnCaption": "token → state → state → state — 每步合并为单一隐藏向量（演示用 LSTM，未训练）。",
-    "transformerCaption": "token ↔ token ↔ token — 并行注意力路径（最后一层权重，归一化显示）。"
+    "transformerParallel": "并行",
+    "stateStep": "h{step}",
+    "meshOmitted": "序列较长时省略交叉连线 — 详见下方 attention 热力图。",
+    "rnnCaption": "一次处理一个 token：每步合并为新的 hidden state hₜ（已训练的 tiny LSTM）。注意链条从左向右逐步增长。",
+    "transformerCaption": "所有 token 同时存在：弧线表示并行的 pairwise attention 路径（因果 self-attention，最后一层）。"
+  },
+  "prediction": {
+    "title": "下一 token 预测",
+    "description": "两个模型均在 WikiText-2 上训练用于下一 token 预测。验证集 perplexity 越低 = 语言建模越好。",
+    "inputLabel": "输入前缀",
+    "topGuess": "最高概率",
+    "valPpl": "验证 PPL",
+    "winner": "更低 PPL",
+    "note": "预测使用 BERT 分词词表。试试 “The apple is” — 模型可能建议 “,”、“a” 或 “not” 等续写。"
   },
   "rnn": {
     "title": "RNN (LSTM)",
     "badge": "顺序处理",
-    "description": "未训练 LSTM（64→128）：每步输出 hidden state 向量。进度条与色块为向量范数/分量的归一化投影，不是语义分数。",
+    "description": "Tiny LSTM（64→128，WikiText-2）：每步输出 hidden state 向量。进度条与色块为向量范数/分量的归一化投影，不是语义分数。",
     "hiddenState": "第 {step} 步 hidden state 投影",
     "l2Norm": "相对 L2 范数：{norm} · 维度 {dim}",
     "vectorTooltip": "分量 {value} — 仅颜色归一化展示，非神经元语义",
-    "metricsTitle": "RNN 趋势代理指标"
+    "metricsTitle": "LSTM 结构探针"
   },
   "transformer": {
     "title": "Transformer",
     "badge": "并行注意力",
-    "description": "最后一层 self-attention（多头均值），归一化后显示。格子越亮 = 在本矩阵内的相对权重 — 非绝对重要性或语义。",
+    "description": "Tiny 因果 Transformer（2 层，4 头）。最后一层 self-attention，归一化后显示。格子越亮 = 在本矩阵内的相对权重。",
     "cellTooltip": "归一化 attention {from} → {to}：{value}（本投影中的相对权重）",
-    "metricsTitle": "Transformer 趋势代理指标"
+    "metricsTitle": "Transformer 结构探针"
   },
   "metrics": {
-    "note": "由 hidden state / attention 动态计算的启发式分数，clamp 至 [0,1] 便于展示。仅作趋势参考，非语言学 benchmark。",
-    "proxyTag": "代理",
-    "localPattern": "局部模式",
-    "spreadPattern": "分布模式",
-    "longRangePattern": "长程模式"
+    "note": "架构相关的结构探针（不宜直接横向对比）。模型质量请以上方预测面板的验证 perplexity 为准。",
+    "probeTag": "探针",
+    "rnn": {
+      "local": "步间变化",
+      "localHint": "相邻 token 之间 hidden state 更新的平均幅度。",
+      "spread": "相邻相似度",
+      "spreadHint": "连续 hidden state 的余弦相似度 — 顺序平滑程度。",
+      "longRange": "晚期 ↔ 起始对齐",
+      "longRangeHint": "晚期 hidden state 与第一步的相似度 — 沿链条传递时 early context 被冲淡则下降。"
+    },
+    "transformer": {
+      "local": "相邻 attention",
+      "localHint": "落在相邻 token 对上的 attention 占比。",
+      "spread": "Attention 聚焦",
+      "spreadHint": "每行 attention 的尖锐程度（1 − 归一化熵）。",
+      "longRange": "平均回看距离",
+      "longRangeHint": "每个 query 平均 attention 到多远的位置 — 直接访问使晚期 token 一步可达更远。"
+    }
   },
   "errors": {
     "emptyText": "请输入要分析的文本。",

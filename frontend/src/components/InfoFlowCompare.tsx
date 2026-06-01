@@ -1,21 +1,13 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../context/I18nContext'
 import { useScrollToStage, RESULTS_PHASES } from '../hooks/useScrollToStage'
-import { FlowTrackScaler } from './FlowTrackScaler'
 import './InfoFlowCompare.css'
 
-const MAX_MESH_TOKENS = 14
+const MAX_MESH_TOKENS = 16
 
 function formatTokenText(text: string): string {
   return text.replace(/\n/g, '\\n')
-}
-
-function nodeWidth(tokenCount: number): string {
-  if (tokenCount > 14) return '4.75rem'
-  if (tokenCount > 10) return '5.25rem'
-  if (tokenCount > 6) return '5.75rem'
-  return '6.25rem'
 }
 
 interface LinkSegment {
@@ -23,6 +15,23 @@ interface LinkSegment {
   y1: number
   x2: number
   y2: number
+  d: string
+}
+
+function arcPath(x1: number, y1: number, x2: number, y2: number): string {
+  const mx = (x1 + x2) / 2
+  const my = (y1 + y2) / 2
+  const spread = Math.hypot(x2 - x1, y2 - y1)
+
+  if (Math.abs(y2 - y1) < 10) {
+    const lift = 14 + spread * 0.1
+    const cy = Math.min(y1, y2) - lift
+    return `M ${x1} ${y1} Q ${mx} ${cy} ${x2} ${y2}`
+  }
+
+  const bend = spread * 0.2
+  const cy = my - bend
+  return `M ${x1} ${y1} Q ${mx} ${cy} ${x2} ${y2}`
 }
 
 export function InfoFlowCompare() {
@@ -32,8 +41,7 @@ export function InfoFlowCompare() {
   const visible = Boolean(result) && phase !== 'input' && phase !== 'loading'
   const tokens = result?.tokens ?? []
   const showMesh = tokens.length <= MAX_MESH_TOKENS
-  const flowNodeW = nodeWidth(tokens.length)
-  const measureKey = `${tokens.length}-${tokens.map((t) => t.text).join('|')}`
+  const measureKey = `${tokens.length}-${tokens.map((tok) => tok.text).join('|')}-${phase}-${rnnStep}`
 
   const tfStageRef = useRef<HTMLDivElement>(null)
   const tfNodeRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -51,9 +59,13 @@ export function InfoFlowCompare() {
 
   const sectionRef = useScrollToStage('info-flow', RESULTS_PHASES, visible)
 
-  const rnnActive = phase === 'results' ? rnnStep : activeTokenIndex
-  const tfActive =
+  const rnnVisibleThrough =
     phase === 'results' ? Math.min(rnnStep, tokens.length - 1) : activeTokenIndex
+  const rnnActive =
+    phase === 'results' ? Math.min(rnnStep, tokens.length - 1) : activeTokenIndex
+
+  const tfMeshThrough =
+    phase === 'results' ? tokens.length - 1 : activeTokenIndex
 
   useLayoutEffect(() => {
     if (!showMesh || !tfStageRef.current || tokens.length === 0) {
@@ -78,12 +90,13 @@ export function InfoFlowCompare() {
       if (centers.some((c) => c === null)) return
 
       setMeshLinks(
-        meshPairs.map(([a, b]) => ({
-          x1: centers[a]!.x,
-          y1: centers[a]!.y,
-          x2: centers[b]!.x,
-          y2: centers[b]!.y,
-        })),
+        meshPairs.map(([a, b]) => {
+          const x1 = centers[a]!.x
+          const y1 = centers[a]!.y
+          const x2 = centers[b]!.x
+          const y2 = centers[b]!.y
+          return { x1, y1, x2, y2, d: arcPath(x1, y1, x2, y2) }
+        }),
       )
     }
 
@@ -91,7 +104,7 @@ export function InfoFlowCompare() {
     const observer = new ResizeObserver(measure)
     observer.observe(tfStageRef.current)
     return () => observer.disconnect()
-  }, [showMesh, tokens.length, meshPairs, rnnActive, tfActive, phase, measureKey])
+  }, [showMesh, tokens.length, meshPairs, tfMeshThrough, phase, measureKey])
 
   if (!visible || !result) return null
 
@@ -104,47 +117,45 @@ export function InfoFlowCompare() {
         </div>
       </div>
 
-      <div
-        className="info-flow-grid"
-        style={{ '--flow-node-w': flowNodeW } as CSSProperties}
-      >
+      <div className="info-flow-grid">
         <div className="info-flow-col info-flow-col--rnn">
           <div className="info-flow-col-head">
             <span className="info-flow-model">RNN</span>
-            <span className="info-flow-tag info-flow-tag--rnn">{t('flow.rnnCompress')}</span>
+            <span className="info-flow-tag info-flow-tag--rnn">{t('flow.rnnSequential')}</span>
           </div>
 
-          <FlowTrackScaler measureKey={measureKey}>
+          <div className="flow-stage">
             <div className="rnn-flow-track">
               {tokens.map((token, i) => {
+                if (i > rnnVisibleThrough) return null
+
                 const isToken = i === 0
                 const isActive = i === rnnActive
                 const isPast = i < rnnActive
-                const compressScale = isToken ? 1 : Math.max(0.88, 1 - i * 0.02)
+                const stateStep = i
 
                 return (
                   <div key={`rnn-${i}`} className="rnn-flow-step">
                     {i > 0 && (
                       <div className={`rnn-flow-arrow ${isPast || isActive ? 'rnn-flow-arrow--live' : ''}`}>
                         <span className="rnn-flow-arrow-line" />
-                        <span className="rnn-flow-arrow-head">→</span>
+                        <span className="rnn-flow-arrow-head" aria-hidden>→</span>
                         <span className="rnn-flow-packet" />
                       </div>
                     )}
                     <div
                       className={[
                         'flow-node',
-                        isToken ? 'flow-node--token' : 'flow-node--state',
+                        isToken ? 'flow-node--rnn-token' : 'flow-node--rnn-state',
                         isActive ? 'flow-node--active' : '',
                         isPast ? 'flow-node--past' : '',
                       ]
                         .filter(Boolean)
                         .join(' ')}
-                      style={{ transform: `scale(${compressScale})` }}
                       title={token.text}
                     >
                       <span className="flow-node-kind">
-                        {isToken ? t('flow.token') : t('flow.state')}
+                        {isToken ? t('flow.token') : t('flow.stateStep', { step: stateStep })}
                       </span>
                       <span className="flow-node-text">{formatTokenText(token.text)}</span>
                     </div>
@@ -152,7 +163,7 @@ export function InfoFlowCompare() {
                 )
               })}
             </div>
-          </FlowTrackScaler>
+          </div>
 
           <p className="info-flow-caption">{t('flow.rnnCaption')}</p>
         </div>
@@ -160,25 +171,23 @@ export function InfoFlowCompare() {
         <div className="info-flow-col info-flow-col--tf">
           <div className="info-flow-col-head">
             <span className="info-flow-model">Transformer</span>
-            <span className="info-flow-tag info-flow-tag--tf">{t('flow.transformerConnect')}</span>
+            <span className="info-flow-tag info-flow-tag--tf">{t('flow.transformerParallel')}</span>
           </div>
 
-          <FlowTrackScaler measureKey={measureKey}>
+          <div className="flow-stage">
             <div className="tf-flow-stage" ref={tfStageRef}>
               {showMesh && meshLinks.length > 0 && (
                 <svg className="tf-flow-mesh" aria-hidden>
                   {meshLinks.map((link, idx) => {
                     const [a, b] = meshPairs[idx] ?? [0, 0]
-                    const lit = a <= tfActive && b <= tfActive
+                    const lit = a <= tfMeshThrough && b <= tfMeshThrough
                     return (
-                      <line
+                      <path
                         key={`link-${a}-${b}`}
-                        x1={link.x1}
-                        y1={link.y1}
-                        x2={link.x2}
-                        y2={link.y2}
+                        d={link.d}
+                        fill="none"
                         className={`tf-flow-link ${lit ? 'tf-flow-link--lit' : ''}`}
-                        style={{ animationDelay: `${idx * 0.08}s` }}
+                        style={{ animationDelay: `${idx * 0.06}s` }}
                       />
                     )
                   })}
@@ -187,22 +196,18 @@ export function InfoFlowCompare() {
 
               <div className="tf-flow-track">
                 {tokens.map((token, i) => {
-                  const isActive = i === tfActive
-                  const isLit = i <= tfActive
+                  const inMesh = i <= tfMeshThrough
                   return (
                     <div key={`tf-${i}`} className="tf-flow-step">
-                      {i > 0 && (
-                        <span className={`tf-flow-bridge ${isLit ? 'tf-flow-bridge--lit' : ''}`}>↔</span>
-                      )}
                       <div
                         ref={(el) => {
                           tfNodeRefs.current[i] = el
                         }}
                         className={[
                           'flow-node',
-                          'flow-node--token',
-                          isActive ? 'flow-node--active' : '',
-                          isLit ? 'flow-node--past' : '',
+                          'flow-node--tf-token',
+                          inMesh ? 'flow-node--past' : '',
+                          inMesh && phase === 'results' ? 'flow-node--tf-live' : '',
                         ]
                           .filter(Boolean)
                           .join(' ')}
@@ -210,14 +215,17 @@ export function InfoFlowCompare() {
                       >
                         <span className="flow-node-kind">{t('flow.token')}</span>
                         <span className="flow-node-text">{formatTokenText(token.text)}</span>
-                        {isActive && <span className="flow-node-ring" aria-hidden />}
                       </div>
                     </div>
                   )
                 })}
               </div>
+
+              {!showMesh && (
+                <p className="tf-flow-mesh-note">{t('flow.meshOmitted')}</p>
+              )}
             </div>
-          </FlowTrackScaler>
+          </div>
 
           <p className="info-flow-caption">{t('flow.transformerCaption')}</p>
         </div>
