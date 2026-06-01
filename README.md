@@ -2,7 +2,7 @@
 
 > **Note:** Attention weights and hidden states are normalized visualization projections. Structure probes and heatmaps illustrate internal geometry — not semantic ground truth. Use **val perplexity** for model quality.
 
-![alt text](https://github.com/tingchungcheng/RNNandTransformerVisualTool/blob/main/RNNTransformerDiff.png)
+![alt text](https://github.com/tingchungcheng/RNNandTransformerVisualTool/blob/main/images/Step0_RNNTransformerDiff.png)
 
 ## Architecture
 
@@ -83,9 +83,16 @@ Open [http://localhost:5173](http://localhost:5173). The Vite dev server proxies
 ## UX flow
 
 1. Enter text and click **Analyze**
-2. Watch tokens appear one by one
+![alt text](https://github.com/tingchungcheng/RNNandTransformerVisualTool/blob/main/images/Step1_Input.png) <br>
+
+2. Tokenization
+![alt text](https://github.com/tingchungcheng/RNNandTransformerVisualTool/blob/main/images/Step2_Tokenization.png) <br>
+
 3. Split view: RNN hidden-state animation (left) vs transformer attention heatmap (right)
+![alt text](https://github.com/tingchungcheng/RNNandTransformerVisualTool/blob/main/images/Step3_ModelPPL.png) <br>
+
 4. Next-token predictions (val PPL comparison) and structure probes on each side
+![alt text](https://github.com/tingchungcheng/RNNandTransformerVisualTool/blob/main/images/Step4_StructureProbes.png) <br>
 
 ## Documentation
 
